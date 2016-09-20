@@ -59,8 +59,8 @@ class ZhihuLogin(object):
         if r.url == self.login_url:
             soup = BeautifulSoup(r.text, 'lxml')
             self.handle_captcha(soup)
-            r = s.post(login_url, data=data)
+            r = self.s.post(login_url, data=data)
         else:
             pass
-        print r.text
         print 'login success'
+        return self.s

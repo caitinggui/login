@@ -1,44 +1,54 @@
 #!usr/bin/python
 #coding:utf-8
 
+import re
+
 import requests
 from bs4 import BeautifulSoup
-import webbrowser
 
-login_url = 'http://www.qiushibaike.com/session.js'
-captcha_name = '/home/ctg/tmp/captcha.jpg'
-host = 'http://www.qiushibaike.com'
+class QiubaiLogin(object):
+    
+    def __init__(self):
+        self.login_url = 'http://www.qiushibaike.com/session.js'
+        self.captcha_name = '/home/ctg/tmp/captcha.jpg'
+        self.host = 'http://www.qiushibaike.com'
 
-headers={
-    'Host': 'www.qiushibaike.com',
-    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0',
-    'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Referer': 'http://www.qiushibaike.com',
-}
-s = requests.Session()
-s.headers = headers
-r = s.get(host)
-soup = BeautifulSoup(r.text)
-login_form_url = host + soup.find(id='uname')['href']
-xsrf1 = soup.find('input',attrs={'name':'_xsrf'})['value']
-r = s.get(login_form_url)
-soup = BeautifulSoup(r.text,'lxml')
-xsrf2 = soup.find('input',attrs={'name':'_xsrf'})['value']
+        self.headers={
+            'Host': 'www.qiushibaike.com',
+            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0',
+            'Referer': self.host,
+        }
+        self.s = requests.Session()
+        self.s.headers = self.headers
+        
+    def login_qiubai(self):
+        r = self.s.get(self.host)
+        soup = BeautifulSoup(r.text, 'lxml')
+        login_form_url = self.host + soup.find(id='uname')['href']
+        r = self.s.get(login_form_url)
+        soup = BeautifulSoup(r.text,'lxml')
+        xsrf2 = soup.find('input',attrs={'name':'_xsrf'})['value']
 
-username = raw_input("Please input username:")
-password = raw_input("Please input password:")
+        username = raw_input("Please input username:")
+        password = raw_input("Please input password:")
 
-data = {
-    'login':username,
-    'password':password,
-    #"_xsrf":xsrf1,
-    "_xsrf":xsrf2,
-    'remember_me':'checked',
+        data = {
+            'login':username,
+            'password':password,
+            "_xsrf":xsrf2,
+            'remember_me':'checked',
 
-}
+        }
 
-r = s.post(login_url, data=data)
-print r.text
-print 'login success'
+        r = self.s.post(self.login_url, data=data)
+        if re.findall('\"err\": 0', r.text):
+            print 'login success'
+            return self.s,r
+        else:
+            print 'login fail'
+            return ''
+        
+        
+if __name__ == '__main__':
+    ctg_qiubai = QiubaiLogin()
+    session = ctg_qiubai.login_qiubai()
